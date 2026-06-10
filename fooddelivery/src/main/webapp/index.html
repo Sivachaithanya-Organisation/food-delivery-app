@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QuickBite - Food Delivery</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+
+  /* Header */
+  header { background: #e74c3c; color: white; padding: 15px 30px;
+           display: flex; justify-content: space-between; align-items: center;
+           box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  header h1 { font-size: 1.8rem; }
+  .cart-btn { background: white; color: #e74c3c; border: none; padding: 10px 20px;
+              border-radius: 25px; cursor: pointer; font-size: 1rem; font-weight: bold; }
+  .cart-btn:hover { background: #f9ebea; }
+
+  /* Category tabs */
+  .categories { background: white; padding: 15px 30px; display: flex; gap: 10px;
+                flex-wrap: wrap; border-bottom: 1px solid #ddd; }
+  .cat-btn { padding: 8px 18px; border: 2px solid #e74c3c; background: white;
+             color: #e74c3c; border-radius: 20px; cursor: pointer; font-weight: 600; }
+  .cat-btn.active, .cat-btn:hover { background: #e74c3c; color: white; }
+
+  /* Menu grid */
+  .menu-section { padding: 25px 30px; }
+  .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+  .food-card { background: white; border-radius: 12px; overflow: hidden;
+               box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: transform .2s; }
+  .food-card:hover { transform: translateY(-4px); }
+  .card-img { width: 100%; height: 130px; object-fit: cover;
+              background: linear-gradient(135deg, #f39c12, #e74c3c);
+              display: flex; align-items: center; justify-content: center;
+              font-size: 3rem; }
+  .card-body { padding: 15px; }
+  .card-body h3 { font-size: 1rem; margin-bottom: 5px; }
+  .card-body p  { font-size: .82rem; color: #666; margin-bottom: 10px; }
+  .card-footer { display: flex; justify-content: space-between; align-items: center; }
+  .price { font-size: 1.1rem; font-weight: bold; color: #e74c3c; }
+  .add-btn { background: #e74c3c; color: white; border: none; padding: 7px 15px;
+             border-radius: 20px; cursor: pointer; font-size: .9rem; }
+  .add-btn:hover { background: #c0392b; }
+
+  /* Cart panel */
+  .cart-overlay { display: none; position: fixed; top: 0; left: 0;
+                  width: 100%; height: 100%; background: rgba(0,0,0,.4); z-index: 100; }
+  .cart-panel { position: fixed; top: 0; right: -420px; width: 400px; height: 100%;
+                background: white; z-index: 101; transition: right .3s;
+                display: flex; flex-direction: column; box-shadow: -4px 0 20px rgba(0,0,0,.15); }
+  .cart-panel.open { right: 0; }
+  .cart-header { background: #e74c3c; color: white; padding: 20px;
+                 display: flex; justify-content: space-between; align-items: center; }
+  .cart-header h2 { font-size: 1.3rem; }
+  .close-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+  .cart-items { flex: 1; overflow-y: auto; padding: 15px; }
+  .cart-item { display: flex; justify-content: space-between; align-items: center;
+               padding: 12px 0; border-bottom: 1px solid #eee; }
+  .item-info { flex: 1; }
+  .item-info .name { font-weight: 600; font-size: .95rem; }
+  .item-info .sub  { font-size: .82rem; color: #888; }
+  .qty-ctrl { display: flex; align-items: center; gap: 10px; }
+  .qty-ctrl button { background: #e74c3c; color: white; border: none; width: 26px; height: 26px;
+                     border-radius: 50%; cursor: pointer; font-size: 1rem; }
+  .qty-ctrl span { font-weight: bold; min-width: 20px; text-align: center; }
+  .cart-footer { padding: 20px; border-top: 2px solid #eee; }
+  .total-line { display: flex; justify-content: space-between; font-size: 1.1rem;
+                font-weight: bold; margin-bottom: 15px; }
+  .checkout-btn { width: 100%; background: #27ae60; color: white; border: none;
+                  padding: 14px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+  .checkout-btn:hover { background: #219a52; }
+  .empty-cart { text-align: center; padding: 60px 20px; color: #aaa; }
+  .empty-cart .icon { font-size: 3rem; margin-bottom: 10px; }
+
+  /* Order modal */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0;
+                   width: 100%; height: 100%; background: rgba(0,0,0,.5); z-index: 200;
+                   align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: white; border-radius: 16px; padding: 35px; width: 460px; max-width: 95vw; }
+  .modal h2 { margin-bottom: 20px; color: #e74c3c; text-align: center; }
+  .form-group { margin-bottom: 15px; }
+  .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: .9rem; }
+  .form-group input, .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 1.5px solid #ddd;
+    border-radius: 8px; font-size: 1rem; }
+  .form-group input:focus, .form-group textarea:focus { border-color: #e74c3c; outline: none; }
+  .modal-btns { display: flex; gap: 12px; margin-top: 20px; }
+  .btn-cancel { flex: 1; padding: 12px; background: #eee; border: none;
+                border-radius: 8px; cursor: pointer; font-size: 1rem; }
+  .btn-place  { flex: 2; padding: 12px; background: #e74c3c; color: white; border: none;
+                border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; }
+
+  /* Success toast */
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+           background: #27ae60; color: white; padding: 14px 28px; border-radius: 30px;
+           font-size: 1rem; display: none; z-index: 300; box-shadow: 0 4px 15px rgba(0,0,0,.2); }
+  .toast.show { display: block; animation: fadeInOut 3s forwards; }
+  @keyframes fadeInOut {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    15%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+    75%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Order confirmation panel */
+  .confirm-box { text-align: center; }
+  .confirm-box .tick { font-size: 4rem; }
+  .confirm-box h3 { margin: 10px 0 5px; color: #27ae60; }
+  .order-details { background: #f9f9f9; border-radius: 8px; padding: 15px; margin: 15px 0;
+                   text-align: left; font-size: .9rem; line-height: 1.8; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <h1>🍕 QuickBite</h1>
+  <button class="cart-btn" onclick="toggleCart()">🛒 Cart (<span id="cart-count">0</span>)</button>
+</header>
+
+<!-- Category Tabs -->
+<div class="categories" id="categories"></div>
+
+<!-- Menu Grid -->
+<div class="menu-section">
+  <div class="menu-grid" id="menu-grid"></div>
+</div>
+
+<!-- Cart Panel -->
+<div class="cart-overlay" id="cart-overlay" onclick="toggleCart()"></div>
+<div class="cart-panel" id="cart-panel">
+  <div class="cart-header">
+    <h2>Your Cart</h2>
+    <button class="close-btn" onclick="toggleCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cart-items"></div>
+  <div class="cart-footer" id="cart-footer" style="display:none;">
+    <div class="total-line">
+      <span>Total</span>
+      <span id="cart-total">₹0</span>
+    </div>
+    <button class="checkout-btn" onclick="openCheckout()">Proceed to Checkout →</button>
+  </div>
+</div>
+
+<!-- Checkout Modal -->
+<div class="modal-overlay" id="checkout-modal">
+  <div class="modal" id="modal-content">
+    <h2>Delivery Details</h2>
+    <div class="form-group">
+      <label>Full Name *</label>
+      <input type="text" id="cust-name" placeholder="Enter your name"/>
+    </div>
+    <div class="form-group">
+      <label>Phone Number *</label>
+      <input type="text" id="cust-phone" placeholder="10-digit mobile number"/>
+    </div>
+    <div class="form-group">
+      <label>Delivery Address *</label>
+      <textarea id="cust-addr" rows="3" placeholder="House no., Street, City, PIN"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-place"  onclick="placeOrder()">Place Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ─────────────────────────────────────────────────────────────────
+  let cart = {};        // { foodId: { item, qty } }
+  let allItems = [];
+
+  // ── Bootstrap ─────────────────────────────────────────────────────────────
+  async function init() {
+    const resp = await fetch('api/menu');
+    allItems = await resp.json();
+    renderCategories();
+    renderMenu(allItems);
+  }
+
+  // ── Categories ────────────────────────────────────────────────────────────
+  function renderCategories() {
+    const cats = ['All', ...new Set(allItems.map(i => i.category))];
+    const el = document.getElementById('categories');
+    el.innerHTML = cats.map(c =>
+      `<button class="cat-btn ${c==='All'?'active':''}"
+               onclick="filterCategory('${c}', this)">${c}</button>`
+    ).join('');
+  }
+
+  function filterCategory(cat, btn) {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderMenu(cat === 'All' ? allItems : allItems.filter(i => i.category === cat));
+  }
+
+  // ── Menu ──────────────────────────────────────────────────────────────────
+  const emojis = { Pizza:'🍕', Burger:'🍔', Biryani:'🍛', Curry:'🍲',
+                   'South Indian':'🫓', Dessert:'🍰', Drinks:'🥤' };
+
+  function renderMenu(items) {
+    const grid = document.getElementById('menu-grid');
+    grid.innerHTML = items.map(item => `
+      <div class="food-card">
+        <div class="card-img">${emojis[item.category] || '🍽️'}</div>
+        <div class="card-body">
+          <h3>${item.name}</h3>
+          <p>${item.description}</p>
+          <div class="card-footer">
+            <span class="price">₹${item.price.toFixed(2)}</span>
+            <button class="add-btn" onclick="addToCart(${item.id})">+ Add</button>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  // ── Cart ──────────────────────────────────────────────────────────────────
+  function addToCart(id) {
+    const item = allItems.find(i => i.id === id);
+    if (!item) return;
+    if (cart[id]) cart[id].qty++;
+    else cart[id] = { item, qty: 1 };
+    updateCartUI();
+    showToast(`${item.name} added to cart 🛒`);
+  }
+
+  function changeQty(id, delta) {
+    if (!cart[id]) return;
+    cart[id].qty += delta;
+    if (cart[id].qty <= 0) delete cart[id];
+    updateCartUI();
+  }
+
+  function updateCartUI() {
+    const total = Object.values(cart).reduce((s, e) => s + e.item.price * e.qty, 0);
+    const count = Object.values(cart).reduce((s, e) => s + e.qty, 0);
+
+    document.getElementById('cart-count').textContent = count;
+
+    const el = document.getElementById('cart-items');
+    if (!count) {
+      el.innerHTML = `<div class="empty-cart"><div class="icon">🛒</div><p>Your cart is empty</p></div>`;
+      document.getElementById('cart-footer').style.display = 'none';
+    } else {
+      el.innerHTML = Object.values(cart).map(({item, qty}) => `
+        <div class="cart-item">
+          <div class="item-info">
+            <div class="name">${item.name}</div>
+            <div class="sub">₹${item.price} × ${qty} = ₹${(item.price * qty).toFixed(2)}</div>
+          </div>
+          <div class="qty-ctrl">
+            <button onclick="changeQty(${item.id}, -1)">−</button>
+            <span>${qty}</span>
+            <button onclick="changeQty(${item.id}, +1)">+</button>
+          </div>
+        </div>`).join('');
+      document.getElementById('cart-total').textContent = `₹${total.toFixed(2)}`;
+      document.getElementById('cart-footer').style.display = 'block';
+    }
+  }
+
+  function toggleCart() {
+    const panel = document.getElementById('cart-panel');
+    const overlay = document.getElementById('cart-overlay');
+    const open = panel.classList.toggle('open');
+    overlay.style.display = open ? 'block' : 'none';
+  }
+
+  // ── Checkout ──────────────────────────────────────────────────────────────
+  function openCheckout() {
+    toggleCart();
+    document.getElementById('checkout-modal').classList.add('show');
+  }
+
+  function closeModal() {
+    document.getElementById('checkout-modal').classList.remove('show');
+    document.getElementById('modal-content').innerHTML = originalModalHTML;
+  }
+
+  const originalModalHTML = `
+    <h2>Delivery Details</h2>
+    <div class="form-group">
+      <label>Full Name *</label>
+      <input type="text" id="cust-name" placeholder="Enter your name"/>
+    </div>
+    <div class="form-group">
+      <label>Phone Number *</label>
+      <input type="text" id="cust-phone" placeholder="10-digit mobile number"/>
+    </div>
+    <div class="form-group">
+      <label>Delivery Address *</label>
+      <textarea id="cust-addr" rows="3" placeholder="House no., Street, City, PIN"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-place" onclick="placeOrder()">Place Order</button>
+    </div>`;
+
+  async function placeOrder() {
+    const name  = document.getElementById('cust-name').value.trim();
+    const phone = document.getElementById('cust-phone').value.trim();
+    const addr  = document.getElementById('cust-addr').value.trim();
+
+    if (!name || !phone || !addr) { showToast('Please fill all fields ⚠️'); return; }
+
+    const orderPayload = {
+      customerName: name,
+      phone: phone,
+      address: addr,
+      items: Object.values(cart).map(({item, qty}) => ({
+        foodId: item.id, foodName: item.name, quantity: qty, price: item.price
+      }))
+    };
+
+    const resp = await fetch('api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(orderPayload)
+    });
+
+    const order = await resp.json();
+    cart = {};
+    updateCartUI();
+
+    // Show confirmation
+    document.getElementById('modal-content').innerHTML = `
+      <div class="confirm-box">
+        <div class="tick">✅</div>
+        <h3>Order Placed Successfully!</h3>
+        <p style="color:#888;margin-bottom:10px">Estimated delivery: 30–45 minutes</p>
+        <div class="order-details">
+          <strong>Order ID:</strong> #${order.orderId}<br/>
+          <strong>Customer:</strong> ${order.customerName}<br/>
+          <strong>Address:</strong> ${order.address}<br/>
+          <strong>Total:</strong> ₹${order.totalAmount.toFixed(2)}<br/>
+          <strong>Status:</strong> ${order.status}<br/>
+          <strong>Time:</strong> ${order.orderTime}
+        </div>
+        <button class="checkout-btn" onclick="closeModal()" style="margin-top:10px">Continue Shopping</button>
+      </div>`;
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.remove('show');
+    void t.offsetWidth;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  init();
+</script>
+</body>
+</html>
