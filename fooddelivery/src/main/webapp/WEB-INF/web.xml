@@ -7,29 +7,8 @@
 
     <display-name>Food Delivery App</display-name>
 
-    <!-- Default welcome page -->
     <welcome-file-list>
         <welcome-file>index.html</welcome-file>
     </welcome-file-list>
-
-    <!-- Menu API -->
-    <servlet>
-        <servlet-name>MenuServlet</servlet-name>
-        <servlet-class>com.fooddelivery.servlet.MenuServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>MenuServlet</servlet-name>
-        <url-pattern>/api/menu</url-pattern>
-    </servlet-mapping>
-
-    <!-- Orders API -->
-    <servlet>
-        <servlet-name>OrderServlet</servlet-name>
-        <servlet-class>com.fooddelivery.servlet.OrderServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>OrderServlet</servlet-name>
-        <url-pattern>/api/orders</url-pattern>
-    </servlet-mapping>
 
 </web-app>
