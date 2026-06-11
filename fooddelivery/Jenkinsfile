@@ -36,7 +36,7 @@ pipeline {
             steps {
                 // Build image on Jenkins server (EC2 #1)
                 sh '''
-                    whoiam
+                    whoami
                     pwd
                     aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${ACCOUNT_ECR}
                     cd fooddelivery/
@@ -51,7 +51,7 @@ pipeline {
                 // SSH into EC2 #2 and run the container there
                 sh '''
                     ssh -o StrictHostKeyChecking=no ${APP_SERVER_USER}@${APP_SERVER_IP}
-                    whoiam
+                    whoami
                     # Pull the image
                     docker pull ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
 
