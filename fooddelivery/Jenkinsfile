@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME       = 'food-delivery'
+        ACCOUNT_ECR    = '794934876309.dkr.ecr.us-west-2.amazonaws.com'
+        IMAGE_NAME     = 'tanusha-maven-project'
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+        CONTAINER_NAME = 'food-delivery-container'
+        APP_PORT       = '8080'
+
+        // EC2 #2 details — store IP in Jenkins credentials
+        APP_SERVER_IP  = credentials('app-server-ip')
+        APP_SERVER_USER = 'ubuntu'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Maven Build') {
+            steps {
+                sh '''
+                    cd fooddelivery/
+                    mvn clean package -DskipTests
+                '''
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                // Build image on Jenkins server (EC2 #1)
+                sh '''
+                    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${ACCOUNT_ECR}
+                    cd fooddelivery/
+                    docker build -t ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG} -t ${ACCOUNT_ECR}/${IMAGE_NAME}:latest .
+                    docker push ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+
+        stage('Deploy on App Server') {
+            steps {
+                // SSH into EC2 #2 and run the container there
+                sh '''
+                    ssh -o StrictHostKeyChecking=no ${APP_SERVER_USER}@${APP_SERVER_IP}
+
+                    # Pull the image
+                    docker pull ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
+
+                    # Stop and remove old container
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm   ${CONTAINER_NAME} || true
+
+                    # Run new container
+                    docker run -d \
+                        --name  ${CONTAINER_NAME} \
+                        -p      ${APP_PORT}:${APP_PORT} \
+                        ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
+
+                    # Confirm running
+                    docker ps | grep ${CONTAINER_NAME}
+                '''
+            }
+        }
+
+    }
+
+}
