@@ -10,7 +10,7 @@ pipeline {
         APP_PORT       = '8080'
 
         // EC2 #2 details — store IP in Jenkins credentials
-        APP_SERVER_IP  = credentials('app-server-ip')
+        APP_SERVER_IP  = "35.84.189.127"
         APP_SERVER_USER = 'ubuntu'
     }
 
@@ -26,6 +26,7 @@ pipeline {
             steps {
                 sh '''
                     cd fooddelivery/
+                    pwd
                     mvn clean package -DskipTests
                 '''
             }
@@ -35,6 +36,8 @@ pipeline {
             steps {
                 // Build image on Jenkins server (EC2 #1)
                 sh '''
+                    whoiam
+                    pwd
                     aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${ACCOUNT_ECR}
                     cd fooddelivery/
                     docker build -t ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG} -t ${ACCOUNT_ECR}/${IMAGE_NAME}:latest .
@@ -48,7 +51,7 @@ pipeline {
                 // SSH into EC2 #2 and run the container there
                 sh '''
                     ssh -o StrictHostKeyChecking=no ${APP_SERVER_USER}@${APP_SERVER_IP}
-
+                    whoiam
                     # Pull the image
                     docker pull ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
 
