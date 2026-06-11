@@ -53,6 +53,7 @@ pipeline {
                     ssh -o StrictHostKeyChecking=no ${APP_SERVER_USER}@${APP_SERVER_IP} "
                         whoami
                         # Pull the image
+                        aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${ACCOUNT_ECR}
                         docker pull ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
 
                         # Stop and remove old container
