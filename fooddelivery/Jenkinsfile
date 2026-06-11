@@ -50,23 +50,24 @@ pipeline {
             steps {
                 // SSH into EC2 #2 and run the container there
                 sh '''
-                    ssh -o StrictHostKeyChecking=no ${APP_SERVER_USER}@${APP_SERVER_IP}
-                    whoami
-                    # Pull the image
-                    docker pull ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
+                    ssh -o StrictHostKeyChecking=no ${APP_SERVER_USER}@${APP_SERVER_IP} "
+                        whoami
+                        # Pull the image
+                        docker pull ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
 
-                    # Stop and remove old container
-                    docker stop ${CONTAINER_NAME} || true
-                    docker rm   ${CONTAINER_NAME} || true
+                        # Stop and remove old container
+                        docker stop ${CONTAINER_NAME} || true
+                        docker rm   ${CONTAINER_NAME} || true
 
-                    # Run new container
-                    docker run -d \
-                        --name  ${CONTAINER_NAME} \
-                        -p      ${APP_PORT}:${APP_PORT} \
-                        ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
+                        # Run new container
+                        docker run -d \
+                            --name  ${CONTAINER_NAME} \
+                            -p      ${APP_PORT}:${APP_PORT} \
+                            ${ACCOUNT_ECR}/${IMAGE_NAME}:${IMAGE_TAG}
 
-                    # Confirm running
-                    docker ps | grep ${CONTAINER_NAME}
+                        # Confirm running
+                        docker ps | grep ${CONTAINER_NAME}
+                    "
                 '''
             }
         }
