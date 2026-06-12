@@ -1,2 +1,2 @@
 # food-delivery-app
-This project based out of maven and tomcat
+This project based out of maven, tomcat and docker
