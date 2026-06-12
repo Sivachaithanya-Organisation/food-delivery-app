@@ -1,0 +1,54 @@
+pipeline {
+
+    agent any
+
+    environment {
+        ACCOUNT_ECR = "794934876309.dkr.ecr.us-west-2.amazonaws.com"
+        ECR_NAME = "tanusha-maven-project"
+        CONTAINER_NAME = "fooddelivery"
+        USERNAME = "ubuntu"
+        SERVR_IP = credentials('maven-server-ip')
+    }
+
+    stages {
+        stage('checkout'){
+            steps{
+                checkout scm
+            }
+        }
+
+        stage('maven build'){
+            steps {
+                sh '''
+                    cd ${CONTAINER_NAME}
+                    mvn clean package
+                '''
+            }
+        }
+
+        stage('DockerBuild'){
+            steps {
+                sh '''
+                    aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${ACCOUNT_ECR}
+                    cd ${CONTAINER_NAME}
+                    docker build -t ${ACCOUNT_ECR}/${ECR_NAME}:${BUILD_NUMBER} .
+                    docker push ${ACCOUNT_ECR}/${ECR_NAME}:${BUILD_NUMBER}
+                '''
+            }
+        }
+
+        stage('Deploy to the maven server') {
+            steps {
+                sh '''
+                    ssh ubuntu@${SERVR_IP} "
+                        aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${ACCOUNT_ECR}
+                        docker pull ${ACCOUNT_ECR}/${ECR_NAME}:${BUILD_NUMBER}
+                        docker rm -f ${CONTAINER_NAME}
+                        docker run -itd -p 8080:8080 --name ${CONTAINER_NAME} ${ACCOUNT_ECR}/${ECR_NAME}:${BUILD_NUMBER}
+                    "
+                '''
+            }
+        }
+
+    }
+}
