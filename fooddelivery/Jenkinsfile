@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PROJECT_URL = "https://github.com/Sivachaithanya-Organisation/food-delivery-app.git"
-        SERVER_IP = "credentials('maven-server-ip')"
+        SERVER_IP = credentials('maven-server-ip')
         REPO_NAME = "food-delivery-app"
         APP_NAME = "fooddelivery"
     }
