@@ -22,7 +22,7 @@ pipeline {
                     whoami
                     ssh ubuntu@${SERVER_IP} "
                     sudo rm -rf ${REPO_NAME}
-                    git clone $(PROJECT_URL)
+                    git clone ${PROJECT_URL}
                     cd ${REPO_NAME}/${APP_NAME}
                     mvn clean package
                     sudo cp target/${APP_NAME}.war /opt/tomcat/webapps/
