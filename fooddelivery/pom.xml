@@ -47,7 +47,7 @@
     </dependencies>
 
     <build>
-        <finalName>food-delivery</finalName>
+        <finalName>fooddelivery</finalName>
 
         <plugins>
             <!-- Compiler plugin -->
@@ -78,7 +78,7 @@
                 <version>2.2</version>
                 <configuration>
                     <port>8080</port>
-                    <path>/food-delivery</path>
+                    <path>/fooddelivery</path>
                 </configuration>
             </plugin>
         </plugins>
