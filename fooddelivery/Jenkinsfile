@@ -19,6 +19,7 @@ pipeline {
         stage('maven build and deploy') {
             steps {
                 sh '''
+                    whoami
                     ssh ubuntu@${SERVER_IP} "
                     sudo rm -rf ${REPO_NAME}
                     git clone $(PROJECT_URL)
