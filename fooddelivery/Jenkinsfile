@@ -1,0 +1,33 @@
+pipeline {
+    agent any
+
+    environment {
+        PROJECT_URL = "https://github.com/Sivachaithanya-Organisation/food-delivery-app.git"
+        SERVER_IP = "credentials('maven-server-ip')"
+        REPO_NAME = "food-delivery-app"
+        APP_NAME = "fooddelivery"
+    }
+
+    stages {
+
+        stage('checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('maven build and deploy') {
+            steps {
+                sh '''
+                    ssh ubuntu@${SERVER_IP} "
+                    sudo rm -rf ${REPO_NAME}
+                    git clone $(PROJECT_URL)
+                    cd ${REPO_NAME}/${APP_NAME}
+                    mvn clean package
+                    sudo cp target/${APP_NAME}.war /opt/tomcat/webapps/
+                    "
+                '''
+            }
+        }
+    }
+}
